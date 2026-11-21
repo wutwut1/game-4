@@ -1,0 +1,283 @@
+/* =====================================================
+   Play ball — สไตล์
+   ขนาดตัวอักษร/ปุ่มทั้งหมดอิง --ui ซึ่งปรับตามขนาดจอเอง
+   ===================================================== */
+:root {
+  --ui: clamp(14px, 1.1vmin + 10px, 26px);
+  --accent: #f97316;
+  --accent-2: #facc15;
+  --glass: rgba(12, 14, 26, 0.5);
+  --line: rgba(255, 255, 255, 0.18);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #fff;
+  background: radial-gradient(circle at 50% 30%, #262a40, #0b0c14 70%);
+  font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+body.camera-on { background: #000; }
+
+#camera {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* กลับซ้ายขวาเหมือนส่องกระจก */
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+body.camera-on #camera { opacity: 1; }
+
+#game {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+#safe-probe {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.hidden { display: none !important; }
+
+/* ---------- HUD ---------- */
+#hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.5em;
+  padding: calc(env(safe-area-inset-top) + 0.6em) calc(env(safe-area-inset-right) + 0.8em) 0 calc(env(safe-area-inset-left) + 0.8em);
+  font-size: var(--ui);
+  pointer-events: none;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.hud-box {
+  justify-self: start;
+  min-width: 5.2em;
+  padding: 0.35em 0.8em;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 0.8em;
+}
+.hud-box.center { justify-self: center; text-align: center; }
+.hud-label { font-size: 0.7em; opacity: 0.8; letter-spacing: 0.05em; }
+.hud-value {
+  font-size: 1.5em;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  display: inline-block;
+}
+#timer.warn { color: #f87171; animation: pulse 1s infinite; }
+.combo { font-size: 0.8em; font-weight: 800; color: var(--accent-2); }
+
+.hud-buttons {
+  justify-self: end;
+  max-width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4em;
+  pointer-events: auto;
+}
+.icon-btn {
+  position: relative;
+  width: 2.4em;
+  height: 2.4em;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: inherit;
+  color: #fff;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn svg {
+  width: 55%;
+  height: 55%;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.icon-btn.off { opacity: 0.5; }
+.icon-btn.off::after {
+  content: "";
+  position: absolute;
+  width: 70%;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+  transform: rotate(-45deg);
+}
+
+/* ---------- ตัวเลขนับถอยหลัง / คำแนะนำ ---------- */
+.countdown {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: clamp(64px, 22vmin, 220px);
+  font-weight: 900;
+  text-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.hint {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 30%);
+  transform: translateX(-50%);
+  padding: 0.6em 1.2em;
+  font-size: var(--ui);
+  white-space: nowrap;
+  background: rgba(12, 14, 26, 0.75);
+  border-radius: 999px;
+  pointer-events: none;
+  animation: pulse 1.4s infinite;
+}
+
+/* ---------- หน้าจอเมนู / หยุด / จบเกม ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: calc(env(safe-area-inset-top) + 1em) calc(env(safe-area-inset-right) + 1em) calc(env(safe-area-inset-bottom) + 1em) calc(env(safe-area-inset-left) + 1em);
+  font-size: var(--ui);
+  background: rgba(5, 6, 12, 0.55);
+}
+.panel {
+  width: min(100%, 32em);
+  max-height: 100%;
+  overflow: auto;
+  padding: 1.4em 1.6em;
+  text-align: center;
+  background: rgba(18, 20, 34, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.2em;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: rise 0.35s ease-out;
+}
+.panel.small { width: min(100%, 18em); }
+
+.title { margin: 0; font-size: 2.6em; font-weight: 900; letter-spacing: 0.02em; }
+.title span { color: var(--accent); }
+.heading { margin: 0 0 0.6em; font-size: 1.6em; }
+.subtitle { margin: 0.2em 0 1em; opacity: 0.85; }
+
+.howto {
+  display: grid;
+  gap: 0.45em;
+  margin: 0 0 1.2em;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  font-size: 0.9em;
+}
+.howto li { padding: 0.5em 0.8em; background: rgba(255, 255, 255, 0.06); border-radius: 0.6em; }
+
+.buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6em; }
+.buttons.column { flex-direction: column; }
+
+.btn {
+  padding: 0.75em 1.3em;
+  font: inherit;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.2s;
+}
+.btn:hover { background: rgba(255, 255, 255, 0.16); }
+.btn:active { transform: scale(0.96); }
+.btn:disabled { opacity: 0.6; cursor: wait; }
+.btn.primary {
+  background: linear-gradient(180deg, #fb923c, #ea580c);
+  border-color: transparent;
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.4);
+}
+
+.status { min-height: 1.2em; margin: 0.8em 0 0; font-size: 0.85em; color: #fde68a; }
+.status.error { color: #fca5a5; }
+.best { margin: 0.6em 0; font-size: 0.85em; opacity: 0.8; }
+
+.big-score { margin: 0.1em 0; font-size: 3.2em; font-weight: 900; line-height: 1; color: var(--accent-2); }
+.record {
+  display: inline-block;
+  padding: 0.2em 0.8em;
+  font-size: 0.8em;
+  font-weight: 800;
+  color: #04210f;
+  background: #22c55e;
+  border-radius: 999px;
+  animation: pulse 1s infinite;
+}
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5em; margin: 1em 0 0.4em; font-size: 0.85em; }
+.stats div { padding: 0.5em; background: rgba(255, 255, 255, 0.06); border-radius: 0.6em; }
+.stats b { display: block; font-size: 1.4em; }
+
+/* ---------- แอนิเมชัน ---------- */
+.pop  { animation: pop 0.4s ease-out; }
+.bump { animation: bump 0.3s ease-out; }
+@keyframes pop   { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes bump  { 0% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes pulse { 50% { opacity: 0.55; } }
+.ghost-text { color: #c084fc; }
+/* โดนหักคะแนนจากห่วงผี */
+.hurt { animation: hurt 0.6s ease-out; }
+@keyframes hurt {
+  0%   { color: #ef4444; transform: translateX(0) scale(1.25); }
+  20%  { transform: translateX(-6px) scale(1.15); }
+  40%  { transform: translateX(6px); }
+  60%  { transform: translateX(-4px); }
+  80%  { transform: translateX(3px); color: #ef4444; }
+  100% { transform: translateX(0) scale(1); }
+}
+@keyframes rise  { from { transform: translateY(20px); opacity: 0; } }
+
+/* ---------- จอเล็ก / มือถือแนวนอน ---------- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .title { font-size: 1.9em; }
+  .subtitle { margin-bottom: 0.6em; }
+  .howto { grid-template-columns: 1fr 1fr; font-size: 0.8em; margin-bottom: 0.8em; }
+  .panel { padding: 0.9em 1.2em; }
+  .big-score { font-size: 2.4em; }
+  .stats { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 420px) {
+  .hud-box { min-width: 4.2em; padding: 0.3em 0.6em; }
+  .icon-btn { width: 2.2em; height: 2.2em; }
+}

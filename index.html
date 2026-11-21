@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0c14">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Play ball</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- ภาพจากกล้อง = พื้นหลังของเกม -->
+  <video id="camera" playsinline muted></video>
+  <!-- ลูกบอล ห่วง เอฟเฟกต์ และเคอร์เซอร์นิ้ว วาดบน canvas นี้ -->
+  <canvas id="game"></canvas>
+  <div id="safe-probe"></div>
+
+  <!-- ===== HUD ระหว่างเล่น ===== -->
+  <header id="hud" class="hidden">
+    <div class="hud-box">
+      <div class="hud-label">คะแนน</div>
+      <div id="score" class="hud-value">0</div>
+      <div id="combo" class="combo"></div>
+    </div>
+    <div class="hud-box center">
+      <div class="hud-label">เวลา</div>
+      <div id="timer" class="hud-value">1:30</div>
+    </div>
+    <div class="hud-buttons">
+      <button id="btn-sound" class="icon-btn" title="เสียงเอฟเฟกต์ (M)" aria-label="เปิด/ปิดเสียงเอฟเฟกต์">
+        <svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" fill="none"/></svg>
+      </button>
+      <button id="btn-music" class="icon-btn" title="เพลง (N)" aria-label="เปิด/ปิดเพลง">
+        <svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" fill="none"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
+      </button>
+      <button id="btn-fullscreen" class="icon-btn" title="เต็มจอ" aria-label="เต็มจอ">
+        <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none"/></svg>
+      </button>
+      <button id="btn-pause" class="icon-btn" title="หยุดชั่วคราว (P)" aria-label="หยุดชั่วคราว">
+        <svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div id="countdown" class="countdown hidden"></div>
+  <div id="hint" class="hint hidden">✋ ยกมือให้กล้องเห็น</div>
+
+  <!-- ===== หน้าเมนู ===== -->
+  <section id="screen-menu" class="overlay">
+    <div class="panel">
+      <h1 class="title">Play <span>ball</span></h1>
+      <p class="subtitle">เกม AR หยิบบอลลงห่วงด้วยมือของคุณ</p>
+      <ul class="howto">
+        <li>✋ ยกมือให้กล้องเห็น</li>
+        <li>🤏 จีบนิ้วโป้งกับนิ้วชี้เพื่อหยิบบอลที่พื้น</li>
+        <li>🏀 ยกไปปล่อยหรือโยนลงห่วงที่ลอยอยู่</li>
+        <li>👻 ระวัง <b class="ghost-text">ห่วงผีสีม่วง</b> ที่มีผีลอยอยู่! โยนลงไปโดนหักคะแนน 50–200</li>
+        <li>⏱️ มีเวลา 1:30 นาที ลงห่วงติดกันได้คอมโบ ลงโดยไม่โดนขอบได้โบนัส</li>
+      </ul>
+      <div class="buttons">
+        <button id="btn-start-camera" class="btn primary">เริ่มเกม (ใช้กล้อง)</button>
+        <button id="btn-start-mouse" class="btn">เล่นด้วยเมาส์ / ทัช</button>
+      </div>
+      <p id="status" class="status"></p>
+      <p class="best">คะแนนสูงสุด: <b id="best-menu">0</b></p>
+    </div>
+  </section>
+
+  <!-- ===== หยุดชั่วคราว ===== -->
+  <section id="screen-pause" class="overlay hidden">
+    <div class="panel small">
+      <h2 class="heading">หยุดชั่วคราว</h2>
+      <div class="buttons column">
+        <button id="btn-resume" class="btn primary">เล่นต่อ</button>
+        <button id="btn-restart" class="btn">เริ่มใหม่</button>
+        <button id="btn-pause-menu" class="btn">กลับหน้าหลัก</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== จบเกม ===== -->
+  <section id="screen-over" class="overlay hidden">
+    <div class="panel">
+      <h2 class="heading">หมดเวลา!</h2>
+      <div id="over-score" class="big-score">0</div>
+      <div id="over-record" class="record hidden">🏆 สถิติใหม่!</div>
+      <div class="stats">
+        <div><b id="over-baskets">0</b>ลงห่วง</div>
+        <div><b id="over-throws">0</b>จำนวนครั้งที่ปล่อยบอล</div>
+        <div><b id="over-accuracy">0%</b>ความแม่นยำ</div>
+        <div><b id="over-combo">x0</b>คอมโบสูงสุด</div>
+      </div>
+      <p class="best">คะแนนสูงสุด: <b id="over-best">0</b></p>
+      <div class="buttons">
+        <button id="btn-again" class="btn primary">เล่นอีกครั้ง</button>
+        <button id="btn-over-menu" class="btn">หน้าหลัก</button>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
